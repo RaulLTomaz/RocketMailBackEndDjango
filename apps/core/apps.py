@@ -20,7 +20,6 @@ class CoreConfig(AppConfig):
         if getattr(settings, "PYTHON_ENV", "") == "test":
             return
         self._log_boot()
-        self._limpar_foto_urls_efemeras()
 
     def _log_boot(self) -> None:
         from django.conf import settings
@@ -29,7 +28,7 @@ class CoreConfig(AppConfig):
 
         db = settings.DATABASES.get("default", {})
         logger.info(
-            "Conectando no banco host=%s name=%s",
+            "Django boot host=%s name=%s",
             db.get("HOST") or "localhost",
             db.get("NAME"),
         )
@@ -48,20 +47,3 @@ class CoreConfig(AppConfig):
             )
         else:
             logger.warning("Cloudinary não configurado — usando disco local (dev/test)")
-
-    def _limpar_foto_urls_efemeras(self) -> None:
-        """Disco do Render é efêmero: zera foto_url locais sem tocar URLs Cloudinary."""
-        try:
-            from apps.usuarios.models import Usuario
-
-            atualizados = Usuario.objects.filter(
-                foto_url__isnull=False,
-                foto_url__contains="/media/avatars/",
-            ).update(foto_url=None)
-            if atualizados:
-                logger.warning(
-                    "Limpou %s foto_url efêmera(s) apontando para /media/avatars/",
-                    atualizados,
-                )
-        except Exception:
-            logger.exception("Falha ao limpar foto_url efêmeras")
