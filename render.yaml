@@ -4,12 +4,13 @@ services:
     runtime: python
     plan: free
     region: oregon
-    pythonVersion: "3.12.8"
     buildCommand: pip install -r requirements.txt
     startCommand: bash -c 'if [ "$RUN_MIGRATIONS" = "1" ]; then python manage.py migrate --noinput; fi; gunicorn config.wsgi:application --bind 0.0.0.0:$PORT'
     healthCheckPath: /healthz
     autoDeploy: true
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
       - key: PYTHON_ENV
         value: production
       - key: DJANGO_SETTINGS_MODULE
