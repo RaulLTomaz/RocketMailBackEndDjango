@@ -17,7 +17,7 @@ def cria_usuario(
     client: APIClient,
     nome: str | None = None,
     email: str | None = None,
-    senha: str = "senha123",
+    senha: str = "Senha123!",
 ) -> dict:
     payload = {
         "nome": nome or f"User {uuid4().hex[:6]}",
@@ -45,7 +45,7 @@ def cria_usuario_com_token(
     client: APIClient,
     nome: str | None = None,
     email: str | None = None,
-    senha: str = "senha123",
+    senha: str = "Senha123!",
 ) -> tuple[dict, str]:
     user = cria_usuario(client, nome=nome, email=email, senha=senha)
     token = criar_token_acesso(user["id"])

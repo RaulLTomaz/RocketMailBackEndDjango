@@ -88,7 +88,7 @@ No front local, aponte `EXPO_PUBLIC_API_URL` / `API_URL` para `http://localhost:
 | `DATABASE_SSL` / `DATABASE_SSL_VERIFY` | SSL; verify default off (Render) |
 | `ALLOWED_ORIGINS` | CSV de origins CORS |
 | `ALLOWED_ORIGIN_REGEX` | Default previews Vercel |
-| `PUBLIC_BASE_URL` | Prefixo das URLs de avatar em disco |
+| `PUBLIC_BASE_URL` | URL pública da API (produção: `https://rocketmail-django.onrender.com`) |
 | `CLOUDINARY_URL` | Obrigatório em produção para upload de foto |
 | `RUN_MIGRATIONS` | `1` no Render para `migrate --noinput` no boot |
 | `FOTO_MAX_BYTES` | Default 5 MB |
@@ -107,8 +107,8 @@ A suíte cobre cadastro/login JWT, posts, feed priorizado, seguir, likes (incl. 
 
 1. Crie o repositório no GitHub e conecte no [Render](https://render.com) via `render.yaml` (Blueprint) ou Web Service manual.
 2. O addon Postgres injeta `DATABASE_URL`.
-3. Defina `PUBLIC_BASE_URL` com a URL pública do serviço (ex.: `https://seu-app.onrender.com`).
-4. Crie conta no [Cloudinary](https://cloudinary.com) e cole `CLOUDINARY_URL` (`cloudinary://API_KEY:API_SECRET@CLOUD_NAME`). Sem isso, `POST /usuario/me/foto` responde **503**.
+3. `PUBLIC_BASE_URL` já vem como `https://rocketmail-django.onrender.com` no `render.yaml`.
+4. Crie conta no [Cloudinary](https://cloudinary.com) e cole `CLOUDINARY_URL` no dashboard (`cloudinary://API_KEY:API_SECRET@CLOUD_NAME`). Sem isso, `POST /usuario/me/foto` responde **503** (disco do Render é efêmero).
 5. `SECRET_KEY` é gerada pelo `render.yaml`. `RUN_MIGRATIONS=1` executa `migrate` no start.
 
 Start command:
@@ -121,5 +121,6 @@ python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.
 
 - Login: `POST /usuario/login` com `application/x-www-form-urlencoded` (`username` = e-mail, `password` = senha).
 - Resposta: `{"access_token": "<jwt>", "token_type": "bearer"}`.
+- Senha no cadastro/PATCH: mínimo 8 caracteres, 1 maiúscula, 1 número e 1 símbolo (igual ao front).
 - Demais rotas autenticadas: `Authorization: Bearer <jwt>`.
-- Erros: `{"detail": "mensagem em português"}`. Sem token → `401` + `WWW-Authenticate: Bearer`.
+- Erros: `{"detail": "mensagem em português"}` em JSON UTF-8. Sem token → `401` + `WWW-Authenticate: Bearer`.

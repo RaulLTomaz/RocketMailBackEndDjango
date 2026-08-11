@@ -11,7 +11,7 @@ def test_criar_usuario_sucesso(client):
     email = email_unico("criar")
     resp = client.post(
         "/usuario/",
-        {"nome": "Novo User", "email": email, "senha": "senha123"},
+        {"nome": "Novo User", "email": email, "senha": "Senha123!"},
         format="json",
     )
     assert resp.status_code == 201
@@ -29,7 +29,7 @@ def test_criar_usuario_email_duplicado(client):
     cria_usuario(client, email=email)
     resp = client.post(
         "/usuario/",
-        {"nome": "Outro", "email": email, "senha": "senha123"},
+        {"nome": "Outro", "email": email, "senha": "Senha123!"},
         format="json",
     )
     assert resp.status_code == 409
@@ -43,20 +43,33 @@ def test_criar_usuario_senha_curta(client):
         format="json",
     )
     assert resp.status_code in (400, 422)
+    assert "pelo menos 8 caracteres" in resp.json()["detail"]
+
+
+def test_criar_usuario_senha_sem_regras_do_front(client):
+    resp = client.post(
+        "/usuario/",
+        {"nome": "Fraca", "email": email_unico("fraca"), "senha": "senha123"},
+        format="json",
+    )
+    assert resp.status_code == 422
+    detail = resp.json()["detail"]
+    assert "maiúscula" in detail
+    assert "símbolo" in detail
 
 
 def test_criar_usuario_nome_vazio(client):
     resp = client.post(
         "/usuario/",
-        {"nome": "", "email": email_unico("vazio"), "senha": "senha123"},
+        {"nome": "", "email": email_unico("vazio"), "senha": "Senha123!"},
         format="json",
     )
     assert resp.status_code in (400, 422)
 
 
 def test_login_sucesso(client):
-    user = cria_usuario(client, email=email_unico("login"), senha="minhasenha")
-    token = login(client, user["email"], "minhasenha")
+    user = cria_usuario(client, email=email_unico("login"), senha="MinhaSenha1!")
+    token = login(client, user["email"], "MinhaSenha1!")
     assert isinstance(token, str) and len(token) > 10
 
     resp = client.get("/usuario/me", **auth_header(token))
@@ -66,8 +79,8 @@ def test_login_sucesso(client):
 
 def test_login_email_case_insensitive(client):
     email = email_unico("CaseLogin")
-    cria_usuario(client, email=email.lower(), senha="senha123")
-    token = login(client, email.upper(), "senha123")
+    cria_usuario(client, email=email.lower(), senha="Senha123!")
+    token = login(client, email.upper(), "Senha123!")
     assert isinstance(token, str) and len(token) > 10
 
 
@@ -108,8 +121,8 @@ def test_me_token_invalido(client):
 
 def test_me_fluxo_completo(client):
     email = email_unico("me")
-    user = cria_usuario(client, nome="Usuario Me", email=email, senha="senha123")
-    token = login(client, email, "senha123")
+    user = cria_usuario(client, nome="Usuario Me", email=email, senha="Senha123!")
+    token = login(client, email, "Senha123!")
     headers = auth_header(token)
 
     resp_me = client.get("/usuario/me", **headers)

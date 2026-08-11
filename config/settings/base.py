@@ -7,6 +7,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
+from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 
 from apps.core.constants import (
@@ -140,7 +141,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.AllowAny",
     ],
     "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
+        "apps.core.renderers.UTF8JSONRenderer",
     ],
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
@@ -171,7 +172,18 @@ ALLOWED_ORIGIN_REGEX = os.getenv(
 )
 
 CORS_ALLOW_METHODS = ["GET", "POST", "PATCH", "DELETE", "OPTIONS", "PUT", "HEAD"]
-CORS_ALLOW_HEADERS = ["authorization", "content-type", "accept", "origin"]
+# Inclui content-type para preflight de multipart (boundary no POST /usuario/me/foto).
+CORS_ALLOW_HEADERS = list(
+    dict.fromkeys(
+        [
+            *default_headers,
+            "authorization",
+            "content-type",
+            "accept",
+            "origin",
+        ]
+    )
+)
 CORS_PREFLIGHT_MAX_AGE = 86400
 
 

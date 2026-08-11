@@ -6,16 +6,15 @@ from apps.core.constants import (
     EMAIL_MAX_LENGTH,
     NOME_MAX_LENGTH,
     SENHA_MAX_LENGTH,
-    SENHA_MIN_LENGTH,
 )
 from apps.usuarios.models import Usuario
+from apps.usuarios.password import validar_politica_senha
 
 
 class UsuarioCreateSerializer(serializers.Serializer):
     nome = serializers.CharField(min_length=1, max_length=NOME_MAX_LENGTH, trim_whitespace=True)
     email = serializers.EmailField(max_length=EMAIL_MAX_LENGTH)
     senha = serializers.CharField(
-        min_length=SENHA_MIN_LENGTH,
         max_length=SENHA_MAX_LENGTH,
         write_only=True,
         trim_whitespace=False,
@@ -30,6 +29,9 @@ class UsuarioCreateSerializer(serializers.Serializer):
     def validate_email(self, value: str) -> str:
         return value.strip().lower()
 
+    def validate_senha(self, value: str) -> str:
+        return validar_politica_senha(value)
+
 
 class UsuarioUpdateSerializer(serializers.Serializer):
     nome = serializers.CharField(
@@ -37,13 +39,15 @@ class UsuarioUpdateSerializer(serializers.Serializer):
     )
     email = serializers.EmailField(max_length=EMAIL_MAX_LENGTH, required=False)
     senha = serializers.CharField(
-        min_length=SENHA_MIN_LENGTH,
         max_length=SENHA_MAX_LENGTH,
         required=False,
         write_only=True,
         trim_whitespace=False,
     )
     foto_url = serializers.CharField(required=False, allow_null=True, allow_blank=False)
+
+    def validate_senha(self, value: str) -> str:
+        return validar_politica_senha(value)
 
     def validate_nome(self, value: str) -> str:
         nome = value.strip()
