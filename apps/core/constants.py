@@ -1,6 +1,7 @@
 """Limites alinhados ao contrato da API / front — evita divergência entre módulos."""
 
 POST_MAX_LENGTH = 280
+COMENTARIO_MAX_LENGTH = 280
 NOME_MAX_LENGTH = 100
 EMAIL_MAX_LENGTH = 100
 SENHA_MIN_LENGTH = 8

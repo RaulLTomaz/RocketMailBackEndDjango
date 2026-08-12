@@ -12,6 +12,7 @@ urlpatterns = [
     path("", include("apps.posts.urls")),
     path("", include("apps.seguir.urls")),
     path("", include("apps.likes.urls")),
+    path("", include("apps.comentarios.urls")),
 ]
 
 # Em produção as fotos ficam no Cloudinary; static() só serve disco local em dev/test.

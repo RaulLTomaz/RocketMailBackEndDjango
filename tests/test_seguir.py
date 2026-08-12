@@ -75,6 +75,29 @@ def test_listar_seguidos(client):
     assert b["id"] in ids
 
 
+def test_listar_seguidores(client):
+    a, token_a = cria_usuario_com_token(client, nome="Alvo")
+    b, token_b = cria_usuario_com_token(client, nome="SeguidorUm")
+    seguir(client, token_b, a["id"])
+
+    resp = client.get("/seguir/seguidores", **auth_header(token_a))
+    assert resp.status_code == 200
+    ids = [u["id"] for u in resp.json()]
+    assert b["id"] in ids
+    assert a["id"] not in ids
+
+
+def test_listar_seguidores_vazio(client):
+    _, token = cria_usuario_com_token(client)
+    resp = client.get("/seguir/seguidores", **auth_header(token))
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+def test_listar_seguidores_requer_auth(client):
+    assert client.get("/seguir/seguidores").status_code == 401
+
+
 def test_unfollow_idempotente(client):
     a, token_a = cria_usuario_com_token(client)
     b, _ = cria_usuario_com_token(client)

@@ -25,6 +25,14 @@ class SeguidosView(APIView):
         return Response(UsuarioOutSerializer(usuarios, many=True).data)
 
 
+class SeguidoresView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuarios = services.listar_seguidores(seguido_id=request.user.id)
+        return Response(UsuarioOutSerializer(usuarios, many=True).data)
+
+
 class SeguirView(APIView):
     permission_classes = [IsAuthenticated]
 

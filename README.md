@@ -26,8 +26,9 @@ apps/
   core/          # healthz, storage (Cloudinary/local), exceptions, throttles
   usuarios/      # model Usuario, JWT, perfil, search, stats
   posts/         # posts, feed
-  seguir/
+  seguir/        # seguir / deixar de seguir, listas de seguidos e seguidores
   likes/
+  comentarios/   # comentários em posts
 tests/
 ```
 
@@ -104,7 +105,19 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-A suíte cobre cadastro/login JWT (claims, expiração), posts, feed priorizado, seguir, likes (incl. batch e post inexistente), search, fotos (magic bytes), healthz, CORS e cascade ao deletar conta.
+A suíte cobre cadastro/login JWT (claims, expiração), posts, feed priorizado, seguir/seguidores, likes (incl. batch e post inexistente), comentários, search, fotos (magic bytes), healthz, CORS e cascade ao deletar conta.
+
+## Endpoints adicionais (comentários e seguidores)
+
+| Método | Path | Descrição |
+|---|---|---|
+| `GET` | `/seguir/seguidos` | Usuários que o autenticado segue |
+| `GET` | `/seguir/seguidores` | Seguidores do autenticado |
+| `GET` | `/comentario/post/{post_id}` | Lista comentários do post (`limit`/`offset`) |
+| `POST` | `/comentario/post/{post_id}` | Cria comentário (`{"comentario": "..."}`) |
+| `DELETE` | `/comentario/{comentario_id}` | Remove o próprio comentário |
+
+Resposta de comentário: `{id, comentario, data_criacao, post_id, usuario:{id,nome,foto_url}}`.
 
 ## Deploy no Render
 

@@ -32,3 +32,8 @@ def deixar_de_seguir(*, seguidor_id: int, seguido_id: int) -> dict:
 def listar_seguidos(*, seguidor_id: int):
     ids = Seguir.objects.filter(seguidor_id=seguidor_id).values("seguido_id")
     return list(queryset_publico().filter(pk__in=ids).order_by("nome", "id"))
+
+
+def listar_seguidores(*, seguido_id: int):
+    ids = Seguir.objects.filter(seguido_id=seguido_id).values("seguidor_id")
+    return list(queryset_publico().filter(pk__in=ids).order_by("nome", "id"))
