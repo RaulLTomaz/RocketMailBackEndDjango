@@ -23,7 +23,7 @@ O app React Native/web chama esta API no browser. **CORS quebrado = produto queb
 ```
 config/          # settings (base/dev/prod/test), urls, wsgi, asgi
 apps/
-  core/          # healthz, storage (Cloudinary/local), exceptions
+  core/          # healthz, storage (Cloudinary/local), exceptions, throttles
   usuarios/      # model Usuario, JWT, perfil, search, stats
   posts/         # posts, feed
   seguir/
@@ -51,7 +51,7 @@ CREATE DATABASE rocketmail_test;
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 copy .env.example .env
 ```
 
@@ -60,11 +60,11 @@ copy .env.example .env
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 cp .env.example .env
 ```
 
-Ajuste `DATABASE_URL` e `SECRET_KEY` no `.env`.
+Ajuste `DATABASE_URL` e `SECRET_KEY` no `.env`. Em produção use `pip install -r requirements.txt` (sem pytest).
 
 ### 3. Migrar e rodar
 
@@ -83,38 +83,41 @@ No front local, aponte `EXPO_PUBLIC_API_URL` / `API_URL` para `http://localhost:
 |---|---|
 | `PYTHON_ENV` | `dev`, `test` ou `production` |
 | `SECRET_KEY` | Obrigatória e forte em produção |
+| `ALLOWED_HOSTS` | **Obrigatório em produção** (ex.: `rocketmail-django.onrender.com,.onrender.com`) |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Default `120` |
 | `DATABASE_URL` | Postgres (`postgres://` é normalizado para `postgresql://`) |
 | `DATABASE_SSL` / `DATABASE_SSL_VERIFY` | SSL; verify default off (Render) |
-| `ALLOWED_ORIGINS` | CSV de origins CORS |
-| `ALLOWED_ORIGIN_REGEX` | Default previews Vercel |
+| `ALLOWED_ORIGINS` | CSV de origins CORS (localhost é removido automaticamente em prod) |
+| `ALLOWED_ORIGIN_REGEX` | Default: previews do projeto na Vercel |
 | `PUBLIC_BASE_URL` | URL pública da API (produção: `https://rocketmail-django.onrender.com`) |
 | `CLOUDINARY_URL` | Obrigatório em produção para upload de foto |
 | `RUN_MIGRATIONS` | `1` no Render para `migrate --noinput` no boot |
 | `FOTO_MAX_BYTES` | Default 5 MB |
+| `THROTTLE_LOGIN` / `THROTTLE_REGISTRO` | Rate limit (default `30/min` e `20/min`) |
 
 ## Testes
 
 Copie `.env.example` para `.env.test` (ou exporte `DATABASE_URL_TEST`) apontando para `rocketmail_test`.
 
 ```bash
+pip install -r requirements-dev.txt
 pytest
 ```
 
-A suíte cobre cadastro/login JWT, posts, feed priorizado, seguir, likes (incl. batch), search sem N+1, fotos, healthz e preflight CORS do front na Vercel.
+A suíte cobre cadastro/login JWT (claims, expiração), posts, feed priorizado, seguir, likes (incl. batch e post inexistente), search, fotos (magic bytes), healthz, CORS e cascade ao deletar conta.
 
 ## Deploy no Render
 
 1. Crie o repositório no GitHub e conecte no [Render](https://render.com) via `render.yaml` (Blueprint) ou Web Service manual.
 2. O addon Postgres injeta `DATABASE_URL`.
-3. `PUBLIC_BASE_URL` já vem como `https://rocketmail-django.onrender.com` no `render.yaml`.
+3. `PUBLIC_BASE_URL` e `ALLOWED_HOSTS` já vêm no `render.yaml`.
 4. Crie conta no [Cloudinary](https://cloudinary.com) e cole `CLOUDINARY_URL` no dashboard (`cloudinary://API_KEY:API_SECRET@CLOUD_NAME`). Sem isso, `POST /usuario/me/foto` responde **503** (disco do Render é efêmero).
 5. `SECRET_KEY` é gerada pelo `render.yaml`. `RUN_MIGRATIONS=1` executa `migrate` no start.
 
-Start command:
+Start command (Blueprint):
 
 ```bash
-python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+bash -c 'if [ "$RUN_MIGRATIONS" = "1" ]; then python manage.py migrate --noinput; fi; gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --timeout 120 --max-requests 1000 --max-requests-jitter 50'
 ```
 
 ## Auth (contrato do front)
@@ -124,3 +127,4 @@ python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.
 - Senha no cadastro/PATCH: mínimo 8 caracteres, 1 maiúscula, 1 número e 1 símbolo (igual ao front).
 - Demais rotas autenticadas: `Authorization: Bearer <jwt>`.
 - Erros: `{"detail": "mensagem em português"}` em JSON UTF-8. Sem token → `401` + `WWW-Authenticate: Bearer`.
+- Login/registro têm rate limit (429 se abusados).

@@ -1,4 +1,4 @@
-"""Tarefas de boot do processo WSGI/ASGI — fora de AppConfig.ready()."""
+"""Limpeza de boot do worker WSGI/ASGI — fora de AppConfig.ready() (warning do Django)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ logger = logging.getLogger("rocketmail")
 
 
 def limpar_foto_urls_efemeras() -> None:
-    """Disco do Render é efêmero: zera foto_url locais sem tocar URLs Cloudinary."""
+    """Zera foto_url de /media/avatars/ (disco efêmero no Render); não altera URLs Cloudinary."""
     from django.conf import settings
 
     if getattr(settings, "PYTHON_ENV", "") == "test":

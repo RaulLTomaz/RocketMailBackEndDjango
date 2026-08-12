@@ -105,6 +105,7 @@ def _ensure_https(url: str) -> str:
 
 
 def _sniff_image(data: bytes) -> str | None:
+    # Magic bytes: o Content-Type do cliente não é confiável.
     if data.startswith(b"\xff\xd8\xff"):
         return "image/jpeg"
     if data.startswith(b"\x89PNG\r\n\x1a\n"):
@@ -136,18 +137,13 @@ def _read_validated(uploaded) -> tuple[bytes, str, str]:
         raise APIError("Arquivo vazio.", status_code=400)
 
     sniffed = _sniff_image(data)
-    declared = (getattr(uploaded, "content_type", None) or "").lower().strip()
-    content_type = sniffed or (declared if declared in ALLOWED_CONTENT_TYPES else None)
-
-    if content_type not in ALLOWED_CONTENT_TYPES:
+    if sniffed is None:
         raise APIError(
             "Tipo de arquivo não suportado. Use JPEG, PNG ou WebP.",
             status_code=400,
         )
 
-    if sniffed:
-        content_type = sniffed
-
+    content_type = sniffed
     ext = ALLOWED_CONTENT_TYPES[content_type]
     return data, content_type, ext
 

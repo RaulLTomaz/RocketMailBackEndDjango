@@ -15,6 +15,7 @@ class CoreConfig(AppConfig):
     def ready(self) -> None:
         from django.conf import settings
 
+        # Sem log de boot durante migrate/collectstatic no deploy nem nos testes.
         if any(cmd in sys.argv for cmd in ("makemigrations", "migrate", "collectstatic")):
             return
         if getattr(settings, "PYTHON_ENV", "") == "test":

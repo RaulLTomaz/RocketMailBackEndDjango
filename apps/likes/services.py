@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.db import IntegrityError, transaction
 from django.db.models import Count
 
 from apps.core.exceptions import APIError
@@ -14,16 +15,23 @@ def _garantir_post_existe(post_id: int) -> None:
 
 def dar_like(*, usuario_id: int, post_id: int) -> dict:
     _garantir_post_existe(post_id)
-    Like.objects.get_or_create(usuario_id=usuario_id, post_id=post_id)
+    try:
+        with transaction.atomic():
+            Like.objects.get_or_create(usuario_id=usuario_id, post_id=post_id)
+    except IntegrityError:
+        # Corrida: unique (usuario, post) — trata como idempotente.
+        pass
     return {"liked": True, "post_id": int(post_id)}
 
 
 def remover_like(*, usuario_id: int, post_id: int) -> dict:
+    _garantir_post_existe(post_id)
     Like.objects.filter(usuario_id=usuario_id, post_id=post_id).delete()
     return {"liked": False, "post_id": int(post_id)}
 
 
 def resumo_like(*, usuario_id: int, post_id: int) -> dict:
+    _garantir_post_existe(post_id)
     count = Like.objects.filter(post_id=post_id).count()
     liked = Like.objects.filter(usuario_id=usuario_id, post_id=post_id).exists()
     return {"post_id": int(post_id), "count": count, "liked_by_me": liked}

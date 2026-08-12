@@ -57,6 +57,29 @@ def test_upload_arquivo_invalido(client):
     assert resp.status_code == 400
 
 
+def test_upload_sem_arquivo_400(client):
+    _, token = cria_usuario_com_token(client)
+    resp = client.post(
+        "/usuario/me/foto",
+        {},
+        format="multipart",
+        **auth_header(token),
+    )
+    assert resp.status_code == 400
+
+
+def test_upload_content_type_mentiroso_rejeitado(client):
+    """Magic bytes obrigatórios: Content-Type image/png com payload texto → 400."""
+    _, token = cria_usuario_com_token(client)
+    resp = client.post(
+        "/usuario/me/foto",
+        {"file": SimpleUploadedFile("fake.png", b"nao-e-png", content_type="image/png")},
+        format="multipart",
+        **auth_header(token),
+    )
+    assert resp.status_code == 400
+
+
 def test_delete_foto(client):
     _, token = cria_usuario_com_token(client)
     up = client.post(

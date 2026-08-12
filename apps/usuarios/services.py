@@ -76,9 +76,16 @@ def atualizar_foto_url(usuario: Usuario, foto_url: str | None) -> Usuario:
 
 
 def deletar_usuario(usuario: Usuario) -> dict:
+    from apps.core.storage import (
+        remover_arquivo_local_se_houver,
+        remover_foto_cloudinary_se_houver,
+    )
     from apps.likes.models import Like
     from apps.posts.models import Post
     from apps.seguir.models import Seguir
+
+    foto_url = usuario.foto_url
+    usuario_id = usuario.id
 
     with transaction.atomic():
         posts_ids = Post.objects.filter(usuario=usuario).values("id")
@@ -87,6 +94,9 @@ def deletar_usuario(usuario: Usuario) -> dict:
         Post.objects.filter(usuario=usuario).delete()
         Seguir.objects.filter(Q(seguidor=usuario) | Q(seguido=usuario)).delete()
         usuario.delete()
+
+    remover_arquivo_local_se_houver(foto_url)
+    remover_foto_cloudinary_se_houver(usuario_id)
     return {"deleted": True}
 
 
@@ -117,7 +127,7 @@ def buscar_usuarios_com_posts(q: str, limit: int, posts_per_user: int) -> list[d
 
     termo = (q or "").strip()
     if not termo:
-        raise APIError("Parâmetro q é obrigatório.", status_code=status.HTTP_400_BAD_REQUEST)
+        raise APIError("Parâmetro q é obrigatório.", status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     usuarios = list(
         queryset_publico().filter(nome__icontains=termo).order_by("nome", "id")[:limit]

@@ -38,6 +38,7 @@ def listar_posts_do_usuario(*, usuario_id: int, limit: int, offset: int) -> list
 
 
 def listar_feed(*, viewer_id: int, limit: int, offset: int) -> list[Post]:
+    """Prioriza posts de quem o viewer segue; depois o restante por data decrescente."""
     seguidos = Seguir.objects.filter(seguidor_id=viewer_id).values("seguido_id")
     qs = (
         _com_autor()
@@ -56,7 +57,7 @@ def listar_feed(*, viewer_id: int, limit: int, offset: int) -> list[Post]:
 def posts_recentes_por_usuarios(
     user_ids: list[int], per_user: int, autores=None
 ) -> dict[int, list[Post]]:
-    """Uma query com row_number() — evita N+1 no Explore."""
+    """Window function (ROW_NUMBER) em uma query — evita N+1 no Explore/search."""
     if not user_ids or per_user <= 0:
         return {}
 

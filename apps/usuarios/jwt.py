@@ -1,9 +1,9 @@
 """
-JWT no contrato do front: HS256 com `sub`, `iat`, `exp` (sem e-mail).
+JWT no contrato do front: HS256 com `sub`, `iat` e `exp` (sem e-mail no payload).
 
-O TokenObtainPair do SimpleJWT devolve `access`/`refresh` e espera JSON
-{username, password} — incompatível com OAuth2 password do RocketMail.
-Usamos o SimpleJWT só para lifetime/algoritmo/chave.
+Não usamos TokenObtainPair do SimpleJWT: ele devolve access/refresh e espera JSON
+{username, password}, incompatível com o login OAuth2 password do RocketMail.
+O SimpleJWT entra só para lifetime, algoritmo e chave de assinatura.
 """
 
 from __future__ import annotations

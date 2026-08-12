@@ -14,7 +14,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", _mapping.get(_env, "config.setti
 
 application = get_wsgi_application()
 
-# Depois do setup: AppConfig.ready() não pode consultar o banco (warning do Django).
+# Após o setup do Django: queries em AppConfig.ready() geram RuntimeWarning.
 from apps.core.boot import limpar_foto_urls_efemeras  # noqa: E402
 
 limpar_foto_urls_efemeras()

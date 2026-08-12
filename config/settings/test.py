@@ -12,7 +12,7 @@ if os.getenv("DATABASE_URL_TEST") and not os.getenv("DATABASE_URL"):
     os.environ["DATABASE_URL"] = os.environ["DATABASE_URL_TEST"]
 
 from .base import *  # noqa: E402,F401,F403
-from .base import ALLOWED_ORIGIN_REGEX, _DEFAULT_PROD_ORIGINS  # noqa: E402
+from .base import ALLOWED_ORIGIN_REGEX, REST_FRAMEWORK, _DEFAULT_PROD_ORIGINS  # noqa: E402
 
 DEBUG = False
 
@@ -32,6 +32,20 @@ CORS_ALLOWED_ORIGINS = list(
 )
 CORS_ALLOWED_ORIGIN_REGEXES = [ALLOWED_ORIGIN_REGEX] if ALLOWED_ORIGIN_REGEX else []
 
+# MD5 só nos testes — acelera create/login sem afetar produção.
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
+
+# Sem connection pooling: evita pytest ficar pendurado ao encerrar.
+DATABASES["default"]["CONN_MAX_AGE"] = 0
+DATABASES["default"]["CONN_HEALTH_CHECKS"] = False
+
+# Throttle alto para não interferir na suíte.
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,
+    "DEFAULT_THROTTLE_RATES": {
+        "login": "10000/min",
+        "registro": "10000/min",
+    },
+}

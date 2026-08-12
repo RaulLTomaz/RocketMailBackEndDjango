@@ -12,6 +12,7 @@ from apps.usuarios.views import (
 )
 
 urlpatterns = [
+    # Cada rota com e sem barra final: APPEND_SLASH=False (front mistura os dois).
     path("usuario/login", LoginView.as_view(), name="usuario-login"),
     path("usuario/login/", LoginView.as_view(), name="usuario-login-slash"),
     path("usuario/me/foto", MeFotoView.as_view(), name="usuario-me-foto"),

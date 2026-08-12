@@ -62,3 +62,24 @@ def test_seguir_nao_usa_seguidor_id_da_query(client):
     assert resp.status_code == 200
     assert resp.json()["seguidor_id"] == a["id"]
     assert resp.json()["seguido_id"] == b["id"]
+
+
+def test_listar_seguidos(client):
+    a, token_a = cria_usuario_com_token(client, nome="SeguidorLista")
+    b, _ = cria_usuario_com_token(client, nome="SeguidoLista")
+    seguir(client, token_a, b["id"])
+
+    resp = client.get("/seguir/seguidos", **auth_header(token_a))
+    assert resp.status_code == 200
+    ids = [u["id"] for u in resp.json()]
+    assert b["id"] in ids
+
+
+def test_unfollow_idempotente(client):
+    a, token_a = cria_usuario_com_token(client)
+    b, _ = cria_usuario_com_token(client)
+    seguir(client, token_a, b["id"])
+    assert deixar_de_seguir(client, token_a, b["id"]).status_code == 200
+    resp = deixar_de_seguir(client, token_a, b["id"])
+    assert resp.status_code == 200
+    assert resp.json()["deleted"] is True

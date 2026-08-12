@@ -6,10 +6,16 @@ def test_search_requer_auth(client):
     assert resp.status_code == 401
 
 
-def test_search_q_vazio_400(client):
+def test_search_q_vazio_422(client):
     _, token = cria_usuario_com_token(client)
     resp = client.get("/usuario/search", {"q": " "}, **auth_header(token))
-    assert resp.status_code == 400
+    assert resp.status_code == 422
+
+
+def test_search_q_ausente_422(client):
+    _, token = cria_usuario_com_token(client)
+    resp = client.get("/usuario/search", **auth_header(token))
+    assert resp.status_code == 422
 
 
 def test_search_sem_match_retorna_lista_vazia(client):

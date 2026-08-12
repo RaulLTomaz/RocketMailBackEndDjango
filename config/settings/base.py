@@ -53,8 +53,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
 ]
 
-# API JWT stateless: sem SessionAuthentication e sem redirect de barra final
-# (o front mistura paths com e sem `/`).
+# Front mistura paths com e sem `/`; False evita 301 e exige rotas duplicadas nos urls.py.
 APPEND_SLASH = False
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
@@ -140,6 +139,10 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
     ],
+    "DEFAULT_THROTTLE_RATES": {
+        "login": os.getenv("THROTTLE_LOGIN", "30/min"),
+        "registro": os.getenv("THROTTLE_REGISTRO", "20/min"),
+    },
     "DEFAULT_RENDERER_CLASSES": [
         "apps.core.renderers.UTF8JSONRenderer",
     ],
@@ -149,12 +152,16 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.MultiPartParser",
     ],
     "EXCEPTION_HANDLER": "apps.core.exceptions.api_exception_handler",
+    # Sem AnonymousUser: request.user fica None quando não há Bearer token.
     "UNAUTHENTICATED_USER": None,
     "DATETIME_FORMAT": None,
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
 
 _DEFAULT_PROD_ORIGINS = [
+    "https://rocket-mail-site.vercel.app",
+]
+_DEFAULT_DEV_ORIGINS = [
     "https://rocket-mail-site.vercel.app",
     "http://localhost:8081",
     "http://localhost:3000",
@@ -168,11 +175,11 @@ ALLOWED_ORIGINS_RAW = os.getenv(
 )
 ALLOWED_ORIGIN_REGEX = os.getenv(
     "ALLOWED_ORIGIN_REGEX",
-    r"https://([\w-]+\.)*vercel\.app",
+    r"https://rocket-mail-site(-[a-z0-9-]+)?\.vercel\.app",
 )
 
 CORS_ALLOW_METHODS = ["GET", "POST", "PATCH", "DELETE", "OPTIONS", "PUT", "HEAD"]
-# Inclui content-type para preflight de multipart (boundary no POST /usuario/me/foto).
+# content-type no preflight: necessário para multipart em POST /usuario/me/foto.
 CORS_ALLOW_HEADERS = list(
     dict.fromkeys(
         [
@@ -188,7 +195,7 @@ CORS_PREFLIGHT_MAX_AGE = 86400
 
 
 def configure_cors() -> None:
-    """CORS explícito em produção; wildcard só em dev quando ALLOWED_ORIGINS=*."""
+    """Produção: origins explícitas + credentials. Dev: wildcard só se ALLOWED_ORIGINS=*."""
     global CORS_ALLOW_ALL_ORIGINS, CORS_ALLOWED_ORIGINS, CORS_ALLOWED_ORIGIN_REGEXES
     global CORS_ALLOW_CREDENTIALS
 
@@ -197,7 +204,10 @@ def configure_cors() -> None:
     regex = (ALLOWED_ORIGIN_REGEX or "").strip()
 
     if PYTHON_ENV in ("production", "prod"):
-        explicit = [o for o in raw if o != "*"]
+        # Sem localhost em produção — só origins explícitas + defaults do produto.
+        explicit = [
+            o for o in raw if o != "*" and "localhost" not in o and "127.0.0.1" not in o
+        ]
         origins = list(dict.fromkeys([*explicit, *_DEFAULT_PROD_ORIGINS]))
         CORS_ALLOW_ALL_ORIGINS = False
         CORS_ALLOWED_ORIGINS = origins
@@ -213,7 +223,7 @@ def configure_cors() -> None:
         return
 
     CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = raw
+    CORS_ALLOWED_ORIGINS = raw or list(_DEFAULT_DEV_ORIGINS)
     CORS_ALLOWED_ORIGIN_REGEXES = [regex] if regex else []
     CORS_ALLOW_CREDENTIALS = True
 

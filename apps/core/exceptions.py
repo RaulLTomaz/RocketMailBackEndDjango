@@ -9,6 +9,7 @@ from rest_framework.exceptions import (
     APIException,
     AuthenticationFailed,
     NotAuthenticated,
+    Throttled,
     ValidationError,
 )
 from rest_framework.response import Response
@@ -16,7 +17,7 @@ from rest_framework.views import exception_handler
 
 
 class APIError(APIException):
-    """Erro de negócio com status HTTP explícito e `detail` string."""
+    """Erro de negócio no formato FastAPI (`{"detail": "..."}`) com status HTTP explícito."""
 
     def __init__(self, detail: str, status_code: int = status.HTTP_400_BAD_REQUEST):
         self.status_code = status_code
@@ -42,6 +43,12 @@ def api_exception_handler(exc: Exception, context: dict) -> Response | None:
             {"detail": "Não autorizado"},
             status=status.HTTP_401_UNAUTHORIZED,
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if isinstance(exc, Throttled):
+        return Response(
+            {"detail": "Muitas tentativas. Tente novamente em instantes."},
+            status=status.HTTP_429_TOO_MANY_REQUESTS,
         )
 
     if isinstance(exc, APIError):

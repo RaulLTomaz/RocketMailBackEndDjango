@@ -5,7 +5,7 @@ services:
     plan: free
     region: oregon
     buildCommand: pip install -r requirements.txt
-    startCommand: bash -c 'if [ "$RUN_MIGRATIONS" = "1" ]; then python manage.py migrate --noinput; fi; gunicorn config.wsgi:application --bind 0.0.0.0:$PORT'
+    startCommand: bash -c 'if [ "$RUN_MIGRATIONS" = "1" ]; then python manage.py migrate --noinput; fi; gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --timeout 120 --max-requests 1000 --max-requests-jitter 50'
     healthCheckPath: /healthz
     autoDeploy: true
     envVars:
@@ -19,10 +19,12 @@ services:
         value: "1"
       - key: PUBLIC_BASE_URL
         value: https://rocketmail-django.onrender.com
+      - key: ALLOWED_HOSTS
+        value: rocketmail-django.onrender.com,.onrender.com
       - key: ALLOWED_ORIGINS
-        value: "https://rocket-mail-site.vercel.app,http://localhost:8081,http://localhost:3000"
+        value: "https://rocket-mail-site.vercel.app"
       - key: ALLOWED_ORIGIN_REGEX
-        value: "https://([\\w-]+\\.)*vercel\\.app"
+        value: "https://rocket-mail-site(-[a-z0-9-]+)?\\.vercel\\.app"
       - key: CLOUDINARY_URL
         sync: false
       - key: SECRET_KEY

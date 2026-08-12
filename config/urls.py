@@ -14,6 +14,6 @@ urlpatterns = [
     path("", include("apps.likes.urls")),
 ]
 
-# Disco local só em dev/test — em produção as fotos vão para o Cloudinary.
+# Em produção as fotos ficam no Cloudinary; static() só serve disco local em dev/test.
 if settings.PYTHON_ENV not in ("production", "prod"):
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

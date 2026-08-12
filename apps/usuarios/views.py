@@ -25,6 +25,7 @@ from apps.core.storage import (
     remover_foto_cloudinary_se_houver,
     salvar_foto_perfil,
 )
+from apps.core.throttles import LoginRateThrottle, RegistroRateThrottle
 from apps.posts.serializers import PostResponseSerializer
 from apps.posts.services import listar_posts_do_usuario
 from apps.usuarios import services
@@ -37,6 +38,7 @@ from apps.usuarios.serializers import (
 
 class CriarUsuarioView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [RegistroRateThrottle]
 
     def post(self, request):
         serializer = UsuarioCreateSerializer(data=request.data)
@@ -46,8 +48,11 @@ class CriarUsuarioView(APIView):
 
 
 class LoginView(APIView):
+    """OAuth2 password grant: form `username` (e-mail) + `password` — contrato do front."""
+
     permission_classes = [AllowAny]
     parser_classes = [FormParser, MultiPartParser]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         username = request.data.get("username") or ""
@@ -65,11 +70,7 @@ class MeView(APIView):
     def patch(self, request):
         serializer = UsuarioUpdateSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        dados = {}
-        for campo in ("nome", "email", "senha", "foto_url"):
-            if campo in request.data:
-                dados[campo] = serializer.validated_data.get(campo)
-        usuario = services.atualizar_usuario(request.user, dados)
+        usuario = services.atualizar_usuario(request.user, dict(serializer.validated_data))
         return Response(UsuarioOutSerializer(usuario).data)
 
     def delete(self, request):

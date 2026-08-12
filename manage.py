@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Ponto de entrada do Django (migrate, runserver, shell)."""
+"""CLI do Django; PYTHON_ENV escolhe o módulo de settings (dev/test/prod)."""
 
 import os
 import sys

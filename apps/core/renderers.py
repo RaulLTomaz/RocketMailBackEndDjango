@@ -2,6 +2,6 @@ from rest_framework.renderers import JSONRenderer
 
 
 class UTF8JSONRenderer(JSONRenderer):
-    """DRF omite charset no JSON; o front precisa de UTF-8 explícito para pt-BR."""
+    """Força charset=utf-8: o JSONRenderer do DRF omite e o front quebra acentos pt-BR."""
 
     charset = "utf-8"

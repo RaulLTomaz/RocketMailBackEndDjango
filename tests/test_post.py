@@ -147,3 +147,10 @@ def test_deletar_post_inexistente(client):
     _, token = cria_usuario_com_token(client)
     resp = client.delete("/post/99999999", **auth_header(token))
     assert resp.status_code == 404
+
+
+def test_listar_posts_limit_invalido_422(client):
+    _, token = cria_usuario_com_token(client)
+    assert client.get("/post/", {"limit": 0}, **auth_header(token)).status_code == 422
+    assert client.get("/post/", {"limit": 201}, **auth_header(token)).status_code == 422
+    assert client.get("/post/", {"offset": -1}, **auth_header(token)).status_code == 422

@@ -1,4 +1,4 @@
-"""Parsing de query params numéricos alinhado ao FastAPI (422 fora da faixa)."""
+"""Parsing de query params numéricos no estilo FastAPI (422 se fora da faixa)."""
 
 from __future__ import annotations
 

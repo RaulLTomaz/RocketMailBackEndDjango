@@ -65,6 +65,22 @@ def test_like_post_inexistente(client):
     _, token = cria_usuario_com_token(client)
     r = client.post("/like/99999999", **auth_header(token))
     assert r.status_code == 404
+    r = client.get("/like/99999999", **auth_header(token))
+    assert r.status_code == 404
+    r = client.delete("/like/99999999", **auth_header(token))
+    assert r.status_code == 404
+
+
+def test_like_batch_sem_ids_422(client):
+    _, token = cria_usuario_com_token(client)
+    r = client.get("/like/batch", **auth_header(token))
+    assert r.status_code == 422
+
+
+def test_like_batch_nao_inteiro_422(client):
+    _, token = cria_usuario_com_token(client)
+    r = client.get("/like/batch?post_ids=abc", **auth_header(token))
+    assert r.status_code == 422
 
 
 def test_like_requer_auth(client):

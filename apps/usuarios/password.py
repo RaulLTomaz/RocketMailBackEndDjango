@@ -1,4 +1,4 @@
-"""Política de senha espelhada em `src/utils/password.ts` do front."""
+"""Política de senha idêntica a `src/utils/password.ts` no front (8+, maiúscula, número, símbolo)."""
 
 from __future__ import annotations
 

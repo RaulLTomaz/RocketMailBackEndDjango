@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from django.db import IntegrityError, transaction
+
 from apps.core.exceptions import APIError
 from apps.seguir.models import Seguir
 from apps.usuarios.models import Usuario
@@ -13,7 +15,12 @@ def seguir_usuario(*, seguidor_id: int, seguido_id: int) -> dict:
     if not Usuario.objects.filter(pk=seguido_id).exists():
         raise APIError("Usuário a seguir não encontrado.", status_code=404)
 
-    Seguir.objects.get_or_create(seguidor_id=seguidor_id, seguido_id=seguido_id)
+    try:
+        with transaction.atomic():
+            Seguir.objects.get_or_create(seguidor_id=seguidor_id, seguido_id=seguido_id)
+    except IntegrityError:
+        # Corrida no unique (seguidor, seguido) — idempotente.
+        pass
     return {"seguidor_id": seguidor_id, "seguido_id": seguido_id}
 
 

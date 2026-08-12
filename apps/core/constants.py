@@ -1,4 +1,4 @@
-"""Limites do contrato da API — evita números mágicos espalhados."""
+"""Limites alinhados ao contrato da API / front — evita divergência entre módulos."""
 
 POST_MAX_LENGTH = 280
 NOME_MAX_LENGTH = 100

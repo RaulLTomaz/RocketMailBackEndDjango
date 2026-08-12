@@ -10,7 +10,7 @@ from apps.usuarios.models import Usuario
 
 
 class JWTAuthentication(BaseAuthentication):
-    """Authorization: Bearer <jwt> — usuário deletado ou token inválido → 401."""
+    """Bearer JWT; token inválido ou usuário inexistente → 401 (mensagem fixa do contrato)."""
 
     def authenticate(self, request: Request):
         header = request.headers.get("Authorization") or ""
