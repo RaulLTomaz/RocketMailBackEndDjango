@@ -106,3 +106,22 @@ def test_unfollow_idempotente(client):
     resp = deixar_de_seguir(client, token_a, b["id"])
     assert resp.status_code == 200
     assert resp.json()["deleted"] is True
+
+
+def test_stats_seguindo_diminui_apos_unfollow(client):
+    """Regressão: após deixar de seguir, GET /usuario/{id}/stats.seguindo deve refletir o banco."""
+    a, token_a = cria_usuario_com_token(client, nome="ContadorA")
+    b, _ = cria_usuario_com_token(client, nome="ContadorB")
+    c, _ = cria_usuario_com_token(client, nome="ContadorC")
+
+    assert seguir(client, token_a, b["id"]).status_code == 200
+    assert seguir(client, token_a, c["id"]).status_code == 200
+    assert client.get(f"/usuario/{a['id']}/stats").json()["stats"]["seguindo"] == 2
+
+    assert deixar_de_seguir(client, token_a, b["id"]).status_code == 200
+    stats = client.get(f"/usuario/{a['id']}/stats").json()["stats"]
+    assert stats["seguindo"] == 1
+
+    seguidos = client.get("/seguir/seguidos", **auth_header(token_a)).json()
+    assert len(seguidos) == 1
+    assert seguidos[0]["id"] == c["id"]
